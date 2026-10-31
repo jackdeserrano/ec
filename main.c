@@ -9,14 +9,14 @@ int main(void) {
         p = pp[i];
         
         if (p == 2 || p == 3 || p == 7) {
-            continue; /* bad reduction */
+            continue; // bad reduction
         }
         
         size_t len;
         
         ge *l = ge_points(&len);
         
-        printf("%zu,",len); /* card(E(F_{p})) */
+        printf("%zu,",len); // card(E(F_{p}))
         free(l);
     }
     

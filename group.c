@@ -2,7 +2,7 @@
 #include "field.c"
 
 #define A 0
-#define B 7 /* y^2 = x^3 + 7 over F_p */
+#define B 7 // y^2 = x^3 + 7 over F_p
 
 typedef struct {
     fe x;

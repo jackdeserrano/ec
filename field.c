@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <assert.h>
 
-uint64_t p; /* F_p */
+uint64_t p; // F_p
 
 typedef struct {
     uint64_t n;
