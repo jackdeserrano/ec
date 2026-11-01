@@ -1,8 +1,12 @@
 #include <stdlib.h>
 #include "field.c"
 
-#define A 0
-#define B 7 // y^2 = x^3 + 7 over F_p
+uint64_t A = 0;
+uint64_t B = 7;
+
+/* the elliptic curve y^2 = x^3 + 7 has bad reduction at
+ * the primes p = 2, 3, 7. when it has good reduction at
+ * p and p is 2 mod 3, the curve has p + 1 points. */
 
 typedef struct {
     fe x;

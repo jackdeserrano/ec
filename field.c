@@ -2,40 +2,34 @@
 #include <stdio.h>
 #include <assert.h>
 
-uint64_t p; // F_p
+uint64_t p;
 
 typedef struct {
     uint64_t n;
 } fe;
 
 void fe_add(fe *r, const fe *a, const fe *b) {
-    r->n = a->n + b->n;
-    r->n %= p;
+    r->n = ((__uint128_t)a->n + b->n) % p;
 }
 
 void fe_add_int(fe *r, const fe *a, const uint64_t b) {
-    r->n = a->n + b;
-    r->n %= p;
+    r->n = ((__uint128_t)a->n + b) % p;
 }
 
 void fe_sub(fe *r, const fe *a, const fe *b) {
-    r->n = p + a->n - b->n;
-    r->n %= p;
+    r->n = ((__uint128_t)p + a->n - b->n) % p;
 }
 
 void fe_neg(fe *r, const fe *a) {
-    r->n = p - a->n;
-    r->n %= p;
+    r->n = (p - a->n) % p;
 }
 
 void fe_mul(fe *r, const fe *a, const fe *b) {
-    r->n = a->n * b->n;
-    r->n %= p;
+    r->n = ((__uint128_t)a->n * b->n) % p;
 }
 
 void fe_mul_int(fe *r, const fe *a, const uint64_t b) {
-    r->n = a->n * b;
-    r->n %= p;
+    r->n = ((__uint128_t)a->n * b) % p;
 }
 
 void fe_sqr(fe *r, const fe *a) {
