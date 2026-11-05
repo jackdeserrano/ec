@@ -27,3 +27,28 @@ uint64_t abs_trace(void) {
 int is_supersingular(void) {
     return abs_trace() % p == 0;
 }
+
+uint64_t ge_order(const ge *a) {
+    uint64_t order = 1;
+    ge b = *a;
+    while (!(b.infinity)) {
+        ge_add(&b, &b, a);
+        ++order;
+    }
+    return order;
+}
+
+// E(F_p) is isomorphic to Z/n_1Z \times Z/n_2Z
+void group_structure(uint64_t *n_1, uint64_t *n_2) {
+    size_t size;
+    ge *points = ge_points(&size);
+    uint64_t max_order = 1;
+    for (int i = 0; i < size; ++i) {
+        ge point = points[i];
+        uint64_t order = ge_order(&point);
+        max_order = order > max_order ? order : max_order;
+    }
+    *n_1 = size / max_order;
+    *n_2 = max_order;
+    free(points);
+}
