@@ -45,11 +45,11 @@ int poly_add(poly *r, const poly *a, const poly *b) {
     for (uint64_t i = 0; i < deg + 1; ++i) {
         if (i < a->deg + 1 && i < b->deg + 1) {
             fe_add(coes + i, a->coes + i, b->coes + i);
-	} else if (i < a->deg + 1) {
+        } else if (i < a->deg + 1) {
             coes[i] = a->coes[i];
-	} else {
+        } else {
             coes[i] = b->coes[i];
-	}
+        }
     }
 
     free(r->coes);
