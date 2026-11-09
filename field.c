@@ -42,17 +42,17 @@ void fe_exp(fe *r, const fe *a, uint64_t e) {
 
     while (e > 0) {
         if (e & 1) {
-	    fe_mul(r,r,&x);
+	    fe_mul(r, r, &x);
 	}
 
-	fe_sqr(&x,&x);
+	fe_sqr(&x, &x);
 	e >>= 1;
     }
 }
 
 void fe_inv(fe *r, const fe *a) {
     assert(a->n);
-    fe_exp(r,a,p-2);
+    fe_exp(r, a, p-2);
 }
 
 int fe_equal(const fe *a, const fe *b) {
