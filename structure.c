@@ -20,7 +20,8 @@ int has_good_reduction(void) {
 
 uint64_t abs_trace(void) {
     size_t size;
-    ge_points(&size);
+    ge *points = ge_points(&size);
+    free(points);
     return p + 1 > size ? p + 1 - size : size - p - 1;
 }
 
@@ -29,6 +30,7 @@ int is_supersingular(void) {
 }
 
 uint64_t ge_order(const ge *a) {
+    assert(ge_valid(a));
     uint64_t order = 1;
     ge b = *a;
     while (!(b.infinity)) {
@@ -40,6 +42,7 @@ uint64_t ge_order(const ge *a) {
 
 // E(F_p) is isomorphic to Z/n_1Z \times Z/n_2Z
 void group_structure(uint64_t *n_1, uint64_t *n_2) {
+    assert(n_1 != n_2);
     size_t size;
     ge *points = ge_points(&size);
     uint64_t max_order = 1;
