@@ -61,7 +61,7 @@ int poly_add(poly *r, const poly *a, const poly *b) {
         }
     }
 
-    free(r->coes);
+    poly_free(r);
     
     r->coes = coes;
     r->deg = deg;
@@ -79,7 +79,7 @@ int poly_mul(poly *r, const poly *a, const poly *b) {
             return 0;
         }
         
-        free(r->coes);
+        poly_free(r);
         
         r->coes = coes;
         r->deg = 0;
@@ -103,7 +103,7 @@ int poly_mul(poly *r, const poly *a, const poly *b) {
         }
     }
 
-    free(r->coes);
+    poly_free(r);
     
     r->coes = coes;
     r->deg = deg;
@@ -124,7 +124,7 @@ int poly_mul_fe(poly *r, const poly *a, const fe *b) {
         fe_mul(coes + i, a->coes + i, b);
     }
 
-    free(r->coes);
+    poly_free(r);
     
     r->coes = coes;
     r->deg = a->deg;
