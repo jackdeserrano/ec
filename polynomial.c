@@ -175,7 +175,7 @@ int poly_divrem(poly *q, poly *r, const poly *a, const poly *b) {
         return 0;
     }
     
-    for (size_t i = 0; i < a->deg + 1; ++i) {
+    for (uint64_t i = 0; i < a->deg + 1; ++i) {
         r_temp.coes[i] = a->coes[i];
     }
     
@@ -188,7 +188,7 @@ int poly_divrem(poly *q, poly *r, const poly *a, const poly *b) {
         
         q_temp.coes[expo] = c;
         
-        for (size_t i = 0; i < b->deg + 1; ++i) {
+        for (uint64_t i = 0; i < b->deg + 1; ++i) {
             fe d;
             fe_mul(&d, &c, b->coes + i);
             fe_sub(&r_temp.coes[i + expo], &r_temp.coes[i + expo], &d);
