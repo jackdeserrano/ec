@@ -1,4 +1,4 @@
-#include "field.c"
+#include "group.c"
 #include <stdlib.h>
 
 typedef struct {
@@ -6,6 +6,7 @@ typedef struct {
     size_t deg;
 } poly;
 
+// requires r is unitialized
 int poly_init(poly *r, size_t deg) {
     r->coes = calloc(deg + 1, sizeof(fe));
 
@@ -19,6 +20,9 @@ int poly_init(poly *r, size_t deg) {
 
 void poly_free(poly *r) {
     free(r->coes);
+    
+    r->coes = 0;
+    r->deg = 0;
 }
 
 void poly_ensure_deg(poly *r) {
@@ -34,7 +38,7 @@ void poly_ensure_deg(poly *r) {
 }
 
 int poly_is_zero(const poly *a) {
-    for (int i = 0; i < a->deg + 1; ++i) {
+    for (uint64_t i = 0; i < a->deg + 1; ++i) {
         if (a->coes[i].n != 0) {
             return 0;
         }
@@ -115,6 +119,7 @@ int poly_mul(poly *r, const poly *a, const poly *b) {
 
 int poly_mul_fe(poly *r, const poly *a, const fe *b) {
     fe *coes = calloc(a->deg + 1, sizeof(fe));
+    size_t deg = a->deg;
 
     if (!coes) {
         return 0;
@@ -127,7 +132,29 @@ int poly_mul_fe(poly *r, const poly *a, const fe *b) {
     poly_free(r);
     
     r->coes = coes;
-    r->deg = a->deg;
+    r->deg = deg;
+
+    poly_ensure_deg(r);
+
+    return 1;
+}
+
+int poly_mul_int(poly *r, const poly *a, const uint64_t b) {
+    fe *coes = calloc(a->deg + 1, sizeof(fe));
+    size_t deg = a->deg;
+
+    if (!coes) {
+        return 0;
+    }
+
+    for (uint64_t i = 0; i < a->deg + 1; ++i) {
+        fe_mul_int(coes + i, a->coes + i, b);
+    }
+
+    poly_free(r);
+    
+    r->coes = coes;
+    r->deg = deg;
 
     poly_ensure_deg(r);
 
@@ -271,4 +298,206 @@ int poly_powmod(poly *r, const poly *a, uint64_t n, const poly *m) {
     poly_free(&b);
     
     return 1;
+}
+
+int poly_div_polys(poly **r, uint64_t n) {
+    poly *r_temp;
+    
+    if ((__uint128_t)n * n >= (__uint128_t)2 * (UINT64_MAX - 1)) {
+        
+        return 0;
+        
+    }
+    
+    r_temp = calloc(n + 1, sizeof(poly));
+    
+    if (!r_temp) {
+        
+        return 0;
+        
+    }
+    
+    poly f = {0};
+    
+    if (!poly_init(&f, 3)) {
+        
+        goto memory;
+        
+    }
+    
+    fe a = {A};
+    fe b = {B};
+    
+    f.coes[0] = b;
+    f.coes[1] = a;
+    f.coes[3].n = 1;
+    
+    if (!poly_mul(&f, &f, &f) || !poly_mul_int(&f, &f, 16)) {
+        
+        goto memory;
+        
+    }
+    
+    poly p1 = {0};
+    poly p2 = {0};
+    
+    fe a2, a3, b2, ab;
+    
+    for (uint64_t i = 0; i < n + 1; ++i) {
+        
+        if (!poly_init(&r_temp[i], i * i / 2)) {
+            
+            goto memory;
+            
+        }
+        
+        if (i == 1) {
+            
+            r_temp[i].coes[0].n = 1;
+            
+        }
+        
+        if (i == 2) {
+            
+            r_temp[i].coes[0].n = 1;
+            
+        }
+        
+        if (i == 3) {
+            
+            fe_sqr(&a2, &a);
+            
+            fe_neg(&r_temp[i].coes[0], &a2);
+            fe_mul_int(&r_temp[i].coes[1], &b, 12);
+            fe_mul_int(&r_temp[i].coes[2], &a, 6);
+            
+            r_temp[i].coes[4].n = 3;
+            
+        }
+        
+        if (i == 4) {
+            
+            fe_sqr(&b2, &b);
+            
+            fe_mul(&a3, &a2, &a);
+            
+            fe_mul(&ab, &a, &b);
+            
+            fe_mul_int(&r_temp[i].coes[0], &b2, 8);
+            fe_add(&r_temp[i].coes[0], &r_temp[i].coes[0], &a3);
+            fe_mul_int(&r_temp[i].coes[0], &r_temp[i].coes[0], 2);
+            fe_neg(&r_temp[i].coes[0], &r_temp[i].coes[0]);
+            
+            fe_mul_int(&r_temp[i].coes[1], &ab, 8);
+            fe_neg(&r_temp[i].coes[1], &r_temp[i].coes[1]);
+            
+            fe_mul_int(&r_temp[i].coes[2], &a2, 10);
+            fe_neg(&r_temp[i].coes[2], &r_temp[i].coes[2]);
+            
+            fe_mul_int(&r_temp[i].coes[3], &b, 40);
+            
+            fe_mul_int(&r_temp[i].coes[4], &a, 10);
+            
+            r_temp[i].coes[6].n = 2;
+            
+        }
+        
+        if (i > 4) {
+            
+            if (!poly_init(&p1, 0) || !poly_init(&p2, 0)) {
+                
+                goto memory;
+                
+            }
+            
+            if (i & 1) {
+                
+                uint64_t k = (i - 1) / 2;
+                
+                if (!poly_mul(&p1, &r_temp[k], &r_temp[k]) || !poly_mul(&p1, &p1, &r_temp[k]) || !poly_mul(&p1, &p1, &r_temp[k + 2])) {
+                    
+                    goto memory;
+                    
+                }
+                
+                if (!poly_mul(&p2, &r_temp[k + 1], &r_temp[k + 1]) || !poly_mul(&p2, &p2, &r_temp[k + 1]) || !poly_mul(&p2, &p2, &r_temp[k - 1])) {
+                    
+                    goto memory;
+                    
+                }
+                
+                
+                if (i & 2) {
+                    
+                    if (!poly_mul(&p2, &p2, &f) || !poly_sub(&r_temp[i], &p1, &p2)) {
+                        
+                        goto memory;
+                        
+                    }
+                    
+                } else {
+                    
+                    if (!poly_mul(&p1, &p1, &f) || !poly_sub(&r_temp[i], &p1, &p2)) {
+                        
+                        goto memory;
+                        
+                    }
+                    
+                }
+                
+            } else {
+                
+                uint64_t k = i / 2;
+                
+                if (!poly_mul(&p1, &r_temp[k - 1], &r_temp[k - 1]) || !poly_mul(&p1, &p1, &r_temp[k + 2])) {
+                    
+                    goto memory;
+                    
+                }
+                
+                if (!poly_mul(&p2, &r_temp[k + 1], &r_temp[k + 1]) || !poly_mul(&p2, &p2, &r_temp[k - 2])) {
+                    
+                    goto memory;
+                    
+                }
+                
+                if (!poly_sub(&r_temp[i], &p1, &p2) || !poly_mul(&r_temp[i], &r_temp[i], &r_temp[k])) {
+                    
+                    goto memory;
+                    
+                }
+                
+            }
+            
+        }
+        
+        poly_ensure_deg(&r_temp[i]);
+        
+        poly_free(&p1);
+        poly_free(&p2);
+        
+    }
+    
+    poly_free(&f);
+    
+    *r = r_temp;
+    
+    return 1;
+    
+memory:
+    
+    for (uint64_t i = 0; i < n + 1; ++i) {
+        
+        poly_free(&r_temp[i]);
+        
+    }
+    
+    free(r_temp);
+    
+    poly_free(&f);
+    poly_free(&p1);
+    poly_free(&p2);
+    
+    return 0;
+    
 }
