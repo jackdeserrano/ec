@@ -154,3 +154,121 @@ int poly_sub(poly *r, const poly *a, const poly *b) {
     
     return success;
 }
+
+int poly_divrem(poly *q, poly *r, const poly *a, const poly *b) {
+    assert(q != r);
+    
+    if (poly_is_zero(b)) {
+        return 0;
+    }
+    
+    poly q_temp, r_temp;
+    
+    size_t q_deg = a->deg > b->deg ? a->deg - b->deg : 0;
+    
+    if (!poly_init(&q_temp, q_deg)) {
+        return 0;
+    }
+    
+    if (!poly_init(&r_temp, a->deg)) {
+        poly_free(&q_temp);
+        return 0;
+    }
+    
+    for (size_t i = 0; i < a->deg + 1; ++i) {
+        r_temp.coes[i] = a->coes[i];
+    }
+    
+    while (r_temp.deg >= b->deg && !(poly_is_zero(&r_temp))) {
+        size_t expo = r_temp.deg - b->deg;
+        
+        fe c;
+        fe_inv(&c, b->coes + b->deg);
+        fe_mul(&c, &r_temp.coes[r_temp.deg], &c);
+        
+        q_temp.coes[expo] = c;
+        
+        for (size_t i = 0; i < b->deg + 1; ++i) {
+            fe d;
+            fe_mul(&d, &c, b->coes + i);
+            fe_sub(&r_temp.coes[i + expo], &r_temp.coes[i + expo], &d);
+        }
+        
+        poly_ensure_deg(&r_temp);
+    }
+    
+    poly_ensure_deg(&q_temp);
+    
+    poly_free(q);
+    poly_free(r);
+    
+    *q = q_temp;
+    *r = r_temp;
+    
+    return 1;
+}
+
+int poly_rem(poly *r, const poly *a, const poly *b) {
+    poly q;
+    
+    if (!poly_init(&q, 0)) {
+        return 0;
+    }
+    
+    if (!poly_divrem(&q, r, a, b)) {
+        poly_free(&q);
+        return 0;
+    }
+    
+    poly_free(&q);
+    
+    return 1;
+}
+
+int poly_powmod(poly *r, const poly *a, uint64_t n, const poly *m) {
+    poly r_temp, b;
+    
+    if (!poly_init(&r_temp, 0)) {
+        return 0;
+    }
+    
+    if (!poly_init(&b, 0)) {
+        poly_free(&r_temp);
+        return 0;
+    }
+    
+    r_temp.coes[0].n = 1;
+    
+    if (!poly_rem(&b, a, m)) {
+        poly_free(&r_temp);
+        poly_free(&b);
+        return 0;
+    }
+    
+    while (n > 0) {
+        
+        if (n & 1) {
+            
+            if (!poly_mul(&r_temp, &r_temp, &b) || !poly_rem(&r_temp, &r_temp, m)) {
+                poly_free(&r_temp);
+                poly_free(&b);
+            }
+
+        }
+        
+        if (!poly_mul(&b, &b, &b) || !poly_rem(&b, &b, m)) {
+            poly_free(&r_temp);
+            poly_free(&b);
+        }
+        
+        n >>= 1;
+        
+    }
+    
+    poly_free(r);
+    *r = r_temp;
+    
+    poly_free(&b);
+    
+    return 1;
+}

@@ -52,7 +52,7 @@ void fe_exp(fe *r, const fe *a, uint64_t e) {
 
 void fe_inv(fe *r, const fe *a) {
     assert(a->n);
-    fe_exp(r, a, p-2);
+    fe_exp(r, a, p - 2);
 }
 
 int fe_equal(const fe *a, const fe *b) {
